@@ -1,0 +1,72 @@
+{
+  "dashboardId": "f9431c78-169f-442d-8f9e-61f8bc0ee73c",
+  "observedOn": "2026-10-21",
+  "source": "Single-user guided browser discovery; 30 checkpoints",
+  "limitations": [
+    "Widget titles and iframe-viewport intersection were observed, not full-dashboard readiness.",
+    "All raw checkpoint labels remained initial_viewport because the dropdown malfunctioned.",
+    "Tab selection and scroll positions distinguish the captured states; raw labels were not rewritten.",
+    "Page scrolling and nested widget scrolling both occurred; the sequence is not yet a fixed replay.",
+    "Filter apply/reset and exports were not exercised.",
+    "No action duration or performance baseline was measured.",
+    "This does not change the historical HAR coverage in dashboard-inventory.json."
+  ],
+  "tabs": [
+    {
+      "name": "Monitoring Visits Summary and Metrics",
+      "checkpointRange": [1, 10],
+      "allListedTitlesObservedInIframeViewport": true,
+      "widgets": [
+        "Study Environments with Visit Counts",
+        "No. of remaining visits to complete",
+        "Visits by Type",
+        "Visit Report Tracking",
+        "Visits by Status",
+        "Overall Visit Conduct Summary",
+        "Visit Schedule and Report Status Summary",
+        "Visit Summary by CRA (Cumulative)",
+        "Visit Summary by Country (Cumulative)",
+        "Visit Summary by Site (Cumulative)",
+        "Visit Summary (Cumulative) by Study",
+        "Visits (Cumulative) by Country",
+        "Visits (Cumulative) by Site",
+        "Visit Reports (Cumulative) by Country",
+        "Visit Reports (Cumulative) by Site",
+        "Monitoring Visits Tracking"
+      ]
+    },
+    {
+      "name": "Site Communication Summary",
+      "checkpointRange": [11, 17],
+      "allListedTitlesObservedInIframeViewport": true,
+      "widgets": [
+        "Site Communication Visit by CRA",
+        "Site Communication Visit by Status",
+        "Site Communication Tracking",
+        "Site Communication Tracking (Cumulative)"
+      ]
+    },
+    {
+      "name": "CRA Monitoring Visit Metrics",
+      "checkpointRange": [18, 27],
+      "allListedTitlesObservedInIframeViewport": true,
+      "widgets": [
+        "Visit Report Tracking Status Summary",
+        "Visit Types by CRA",
+        "Visit Types and Visit Status by CRA",
+        "Visit Status by CRA",
+        "Visit Report Tracking Status by CRA",
+        "CRA Cumulative Visit Metrics",
+        "CRA Overall Visit Report Metrics",
+        "CRA Visit Details and Report Metrics",
+        "CRA Overall Metrics"
+      ]
+    },
+    {
+      "name": "Download",
+      "checkpointRange": [28, 30],
+      "allListedTitlesObservedInIframeViewport": true,
+      "widgets": ["Summary Table"]
+    }
+  ]
+}

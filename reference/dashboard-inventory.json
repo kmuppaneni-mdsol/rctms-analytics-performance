@@ -1,0 +1,84 @@
+{
+  "dashboardId": "f9431c78-169f-442d-8f9e-61f8bc0ee73c",
+  "dashboardName": "[Portfolio] Monitoring Visits Dashboard",
+  "dashboardUrl": "https://home-sandbox.imedidata.net/apps/Analytics/dashboards?dashboardId=f9431c78-169f-442d-8f9e-61f8bc0ee73c",
+  "metadataEndpoint": "https://home-sandbox.imedidata.net/api/analytics/dashboards/f9431c78-169f-442d-8f9e-61f8bc0ee73c",
+  "graphqlEndpoint": "https://medidata-dev.thoughtspot.cloud/prism/",
+  "capture": {
+    "date": "2026-10-20",
+    "entries": 509,
+    "startedAt": "2026-10-20T16:10:01.202Z",
+    "lastRequestStartedAt": "2026-10-20T16:11:35.104Z",
+    "scope": "Browser-visible traffic only; not backend SQL or upstream ingestion APIs"
+  },
+  "worksheet": {
+    "id": "d732b2b9-e37b-4b87-8e9f-316e2b615a65",
+    "name": "[Portfolio] CTMS - Monitoring Visits",
+    "type": "WORKSHEET",
+    "columnCount": 83
+  },
+  "graphqlOperations": {
+    "GetPersonalisedViews": 1,
+    "LoadPinboardSession": 1,
+    "updateUserPreferences": 1,
+    "isPublished": 1,
+    "getVerificationStatus": 1,
+    "getPinboardDataSources": 1,
+    "GetHomepageModuleList": 1,
+    "GetStyleConfigMap": 1,
+    "LoadContextBook": 16,
+    "GetEmbedActionsAssociation": 11,
+    "GetCommunicationConnections": 1
+  },
+  "tabs": [
+    {
+      "id": "f6cf0b49-c739-4cff-b2e0-572bf4012526",
+      "name": "Monitoring Visits Summary and Metrics",
+      "dataCallsCaptured": true,
+      "widgets": [
+        "Study Environments with Visit Counts",
+        "No. of remaining visits to complete",
+        "Visits by Type",
+        "Visit Report Tracking",
+        "Visits by Status",
+        "Overall Visit Conduct Summary",
+        "Visit Schedule and Report Status Summary",
+        "Visit Summary by CRA (Cumulative)",
+        "Visit Summary by Country (Cumulative)",
+        "Visit Summary by Site (Cumulative)",
+        "Visit Summary (Cumulative) by Study",
+        "Visits (Cumulative) by Country",
+        "Visits (Cumulative) by Site",
+        "Visit Reports (Cumulative) by Country",
+        "Visit Reports (Cumulative) by Site",
+        "Monitoring Visits Tracking"
+      ]
+    },
+    {
+      "id": "285bee13-a3fa-4d55-8c69-72d9495ecf3b",
+      "name": "Site Communication Summary",
+      "dataCallsCaptured": false,
+      "widgets": []
+    },
+    {
+      "id": "512a3948-6043-4c6d-9116-b6a0130d0ec7",
+      "name": "CRA Monitoring Visit Metrics",
+      "dataCallsCaptured": false,
+      "widgets": []
+    },
+    {
+      "id": "cdd10ce0-3deb-447e-b5d9-156a0b5eef50",
+      "name": "Download",
+      "dataCallsCaptured": false,
+      "widgets": []
+    }
+  ],
+  "knownErrors": [
+    {
+      "operation": "GetCommunicationConnections",
+      "httpStatus": 500,
+      "message": "Cannot query field \"communicationConnections\" on type \"Query\".",
+      "graphqlCode": "GRAPHQL_VALIDATION_FAILED"
+    }
+  ]
+}

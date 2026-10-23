@@ -1,0 +1,27 @@
+{
+  "name": "rctms-analytics-performance",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "k6 browser concurrency testing for Medidata Analytics dashboards",
+  "scripts": {
+    "test": "node --test",
+    "test:syntax": "node --check scripts/local-smoke.js && node --check scripts/inspect-login.js && node --check scripts/login-poc.js && node --check scripts/run-login-poc.js && node --check lib/dashboard-probe.js && node --check lib/widget-state.js && node --check lib/widget-readiness.js && node --check scripts/dashboard-probe-local.js && node --check lib/guided-discovery.js && node --check lib/discovery-report.js && node --check scripts/discovery-local.js && node --check lib/journey.js && node --check lib/journey-dom.js && node --check lib/journey-plan.js && node --check lib/journey-report.js && node --check scripts/journey-local.js && node --check lib/baseline-report.js && node --check scripts/summarize-baseline.js && node --check lib/filter.js && node --check lib/filter-dom.js && node --check lib/filter-report.js && node --check scripts/filter-local.js",
+    "smoke:local": "k6 run scripts/local-smoke.js",
+    "login:poc": "node scripts/run-login-poc.js",
+    "login:mfa": "node scripts/run-login-poc.js --manual-mfa",
+    "dashboard:inspect": "node scripts/run-login-poc.js --manual-mfa --inspect-dashboard",
+    "dashboard:smoke": "node scripts/run-login-poc.js --manual-mfa --check-widget",
+    "dashboard:discover": "node scripts/run-login-poc.js --manual-mfa --discover",
+    "dashboard:journey": "node scripts/run-login-poc.js --manual-mfa --journey",
+    "dashboard:open-journey": "node scripts/run-login-poc.js --manual-mfa --open-journey",
+    "dashboard:filter": "node scripts/run-login-poc.js --manual-mfa --filter",
+    "dashboard:experience": "node scripts/run-login-poc.js --manual-mfa --experience",
+    "dashboard:filter-inspect": "node scripts/run-login-poc.js --manual-mfa --filter-inspect",
+    "smoke:filter-local": "k6 run scripts/filter-local.js",
+    "dashboard:baseline-report": "node scripts/summarize-baseline.js",
+    "smoke:journey-local": "k6 run scripts/journey-local.js",
+    "smoke:discovery-local": "k6 run scripts/discovery-local.js",
+    "smoke:widget-local": "k6 run scripts/dashboard-probe-local.js"
+  }
+}

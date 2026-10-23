@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+node_modules/
+results/
+*.har
+*.log
+*.pem
+*.key
+auth/
+storage-state*.json
+.DS_Store
