@@ -48,22 +48,70 @@ Credentials remain plaintext in local files. Use an organization-approved
 secret manager where available. Do not retry failed logins or repeat live runs
 without approval.
 
-## Optional commands
+## Other browser workflows
 
-These are separate workflows, not prerequisites for `dashboard:experience`:
+These are useful for testing one browser workflow in isolation, but are not
+needed for the combined `dashboard:experience` capture:
 
 - `npm run dashboard:journey` — tab/scroll journey without reload and filter.
 - `npm run dashboard:open-journey` — reload and journey only.
 - `npm run dashboard:filter` — guarded filter apply/reset only.
 - `npm run dashboard:discover` — guided UI observations, not a performance
   measurement.
-- `npm run api:authorization` — standalone platform authorization probe.
-- `npm run api:liveboard` — one ThoughtSpot Liveboard REST request;
-  `npm run api:liveboard:burst` sends six concurrent requests under one
-  identity. These require additional local configuration.
 
-Obtain explicit approval before sending live API traffic. Do not increase or
-repeat workload without approval.
+## API workflow tests
+
+These are separate API workflows and should be run when validating
+authorization or Liveboard API behavior. The combined dashboard capture's
+passive API timings do not replace either test. Obtain explicit approval before
+sending live traffic; do not increase or repeat workload without approval.
+
+### Platform authorization
+
+Uses the normal headed login/MFA flow and `.env` credentials from above. Install
+dependencies with `npm ci`, then run:
+
+```sh
+npm run api:authorization
+```
+
+By default, the probe makes three sequential measured authorization requests
+after application bootstrap. Optionally configure `.env.authorization`:
+
+```dotenv
+AUTH_SAMPLES=3
+AUTH_INTERVAL_MS=1000
+AUTH_TIMEOUT_MS=60000
+```
+
+It uses the sandbox origin, does not retry measured requests, and stops on a
+failed contract or request. Authorization can synchronize memberships and
+issue tokens. Reports contain sanitized timings and trace correlation where
+available; the probe does not query AWS logs.
+
+### ThoughtSpot Liveboard
+
+Configure `.env.api` with a verified ThoughtSpot host, Liveboard ID, and
+short-lived token. Restrict its permissions with `chmod 600 .env.api`:
+
+```dotenv
+TS_HOST=https://your-verified-host.thoughtspot.cloud
+LIVEBOARD_ID=your-liveboard-guid
+TS_TOKEN=
+```
+
+Run one request or the fixed six-request burst:
+
+```sh
+npm run api:liveboard
+npm run api:liveboard:burst
+```
+
+Both use a fixed request shape and do not retry or follow redirects. The burst
+sends six concurrent requests under one shared identity. The response contract
+checks status, shape, Liveboard identity, and visualization coverage; it does
+not prove data quality or populated-data performance. Use the Node runner for
+live requests, not `scripts/liveboard-api.js` directly.
 
 ## Offline validation
 
