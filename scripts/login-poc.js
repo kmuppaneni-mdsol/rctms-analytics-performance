@@ -6,6 +6,7 @@ import { guidedDiscovery } from '../lib/guided-discovery.js';
 import { runJourney } from '../lib/journey.js';
 import { journeyPlan } from '../lib/journey-plan.js';
 import { runFilter } from '../lib/filter.js';
+import { observeExperienceApi } from '../lib/experience-api.js';
 
 const confirmed = new Counter('analytics_route_confirmed');
 const loginHost = 'login-sandbox.imedidata.net';
@@ -19,6 +20,7 @@ const timedJourney = __ENV.ANALYTICS_TIMED_JOURNEY === 'true';
 const openJourney = __ENV.ANALYTICS_OPEN_JOURNEY === 'true';
 const filterTest = __ENV.ANALYTICS_FILTER_TEST === 'true';
 const inspectFilter = __ENV.ANALYTICS_INSPECT_FILTER === 'true';
+const experience = __ENV.ANALYTICS_EXPERIENCE === 'true';
 const plan = timedJourney || filterTest ? journeyPlan(JSON.parse(open('../reference/dashboard-ui-inventory.json'))) : [];
 const probeCompleted = new Counter('dashboard_probe_completed');
 const widgetRendered = new Counter('dashboard_widget_rendered');
@@ -58,6 +60,8 @@ export default async function () {
     throw new Error('Credentials missing; use npm run login:poc.');
   }
   const page = await browser.newPage(timedJourney || filterTest ? { viewport: { width: 1280, height: 720 } } : {});
+  const api = experience ? observeExperienceApi(page,
+    (record) => console.log(`EXPERIENCE_API ${JSON.stringify(record)}`)) : null;
   let stage = 'opening_login';
   try {
     if (timedJourney || filterTest) {
@@ -121,15 +125,18 @@ export default async function () {
     if (timedJourney) {
       stage = 'running_journey';
       console.log('LOGIN_POC_STATUS journey_started');
-      await runJourney(page, plan, { reload: openJourney });
+      api?.action('journey_setup');
+      await runJourney(page, plan, { reload: openJourney, onAction: api?.action });
       journeyCompleted.add(1);
       console.log('LOGIN_POC_STATUS journey_complete');
     }
     if (filterTest) {
       stage = 'running_filter';
       console.log('LOGIN_POC_STATUS filter_started');
+      api?.action('filter_setup');
       await runFilter(page, plan[0], {
         inspectFailure: inspectFilter, target: __ENV.ANALYTICS_STUDY_GROUP,
+        onAction: api?.action,
       });
       filterCompleted.add(1);
       console.log('LOGIN_POC_STATUS filter_complete');
@@ -138,6 +145,14 @@ export default async function () {
     console.log(`LOGIN_POC_STATUS ${stage}_failed`);
     throw new Error('Single-user login did not complete; raw details withheld to protect credentials and session data.');
   } finally {
-    await page.close();
+    try {
+      if (api) {
+        console.log('LOGIN_POC_STATUS api_capture_finalizing');
+        console.log(`EXPERIENCE_API_CAPTURE ${JSON.stringify(await api.finish())}`);
+        console.log('LOGIN_POC_STATUS api_capture_finalized');
+      }
+    } finally {
+      await page.close();
+    }
   }
 }

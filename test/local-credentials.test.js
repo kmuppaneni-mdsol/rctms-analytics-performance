@@ -46,6 +46,7 @@ test('runner filters secrets, drops k6 overrides, and requires confirmed navigat
     copyFileSync(new URL('../lib/journey-plan.js', import.meta.url), join(directory, 'lib/journey-plan.js'));
     copyFileSync(new URL('../lib/filter-report.js', import.meta.url), join(directory, 'lib/filter-report.js'));
     copyFileSync(new URL('../lib/experience-report.js', import.meta.url), join(directory, 'lib/experience-report.js'));
+    copyFileSync(new URL('../lib/experience-api.js', import.meta.url), join(directory, 'lib/experience-api.js'));
     mkdirSync(join(directory, 'reference'));
     copyFileSync(new URL('../reference/dashboard-ui-inventory.json', import.meta.url), join(directory, 'reference/dashboard-ui-inventory.json'));
     writeFileSync(join(directory, 'package.json'), '{"type":"module"}');
@@ -227,8 +228,8 @@ if (${confirmFilter}) console.log(JSON.stringify({source:'console',msg:'LOGIN_PO
       assert.doesNotMatch(content, /fake|password|example\.invalid|ignored/);
       if (file.endsWith('.md')) {
         experienceReports++;
-        assert.match(content, /Single-user dashboard experience/);
-        assert.match(content, /not wall-clock journey time/);
+        assert.match(content, /Dashboard performance summary/);
+        assert.match(content, /browser RTT is not backend execution/);
         continue;
       }
       const records = content.trim().split('\n').map((line) => JSON.parse(line));

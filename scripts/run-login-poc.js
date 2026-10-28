@@ -11,6 +11,7 @@ import { journeyRecord, journeySummary } from '../lib/journey-report.js';
 import { journeyPlan } from '../lib/journey-plan.js';
 import { filterRecord, filterSummary } from '../lib/filter-report.js';
 import { experienceReport } from '../lib/experience-report.js';
+import { apiCloudWatch, apiErrorCategories, apiRecord } from '../lib/experience-api.js';
 
 const args = process.argv.slice(2);
 if (args.some((arg) => !['--manual-mfa', '--inspect-dashboard', '--check-widget', '--discover', '--journey', '--open-journey', '--filter', '--filter-inspect', '--experience'].includes(arg)) ||
@@ -84,6 +85,7 @@ if (checkWidget) env.ANALYTICS_CHECK_WIDGET = 'true';
 if (discoverJourney) env.ANALYTICS_GUIDED_DISCOVERY = 'true';
 if (timedJourney) env.ANALYTICS_TIMED_JOURNEY = 'true';
 if (openJourney) env.ANALYTICS_OPEN_JOURNEY = 'true';
+if (experience) env.ANALYTICS_EXPERIENCE = 'true';
 if (filterTest) env.ANALYTICS_FILTER_TEST = 'true';
 if (filterTest) env.ANALYTICS_STUDY_GROUP = filterTarget;
 if (inspectFilter) env.ANALYTICS_INSPECT_FILTER = 'true';
@@ -91,6 +93,8 @@ for (const key of ['PATH', 'HOME', 'TMPDIR', 'TMP', 'TEMP', 'SystemRoot', 'DISPL
   if (process.env[key] !== undefined) env[key] = process.env[key];
 }
 const messages = {
+  api_capture_finalizing: 'Finalizing same-session API evidence (bounded wait; missing metadata stays unavailable).',
+  api_capture_finalized: 'API evidence saved; closing the browser.',
   filter_started: 'Starting guarded Study Group apply/reset. Leave the browser untouched.',
   filter_complete: 'Study Group apply/reset passed UI lifecycle, widget readiness and selection-restoration checks.',
   filter_apply_failed: 'Study Group apply failed; attempting isolated restoration, not a global reset.',
@@ -143,9 +147,18 @@ if (discoverJourney || measuredMode) {
       k6Version = match[1];
     }
     mkdirSync(new URL('../results/', import.meta.url), { recursive: true, mode: 0o700 });
-    reportFile = new URL(`../results/${experience ? 'experience' : filterTest ? 'filter' : timedJourney ? 'journey' : 'discovery'}-${randomUUID()}.jsonl`, import.meta.url);
+    const reportId = randomUUID();
+    reportFile = new URL(`../results/${experience ? 'experience' : filterTest ? 'filter' : timedJourney ? 'journey' : 'discovery'}-${reportId}.jsonl`, import.meta.url);
     session = {
       type: 'session', startedAt: new Date().toISOString(),
+      ...(experience ? { reportId, apiEvidence: {
+        timing: 'Browser request event to completion event, including dispatch overhead; not backend execution.',
+        cloudWatchSource: 'Known sandbox infrastructure naming; log availability is not checked.',
+        cloudWatch: {
+          authorization: apiCloudWatch('platform_authorization'),
+          dashboard: apiCloudWatch('platform_dashboard'),
+        },
+      } } : {}),
       mode: experience ? 'single-user-experience' : filterTest ? 'study-group-apply-reset' : openJourney ? 'authenticated-reload-and-journey' : timedJourney ? 'timed-read-only-journey' : 'guided-discovery',
       performanceMeasured: measuredMode,
       ...(filterTest ? { visualInspectionEnabled: inspectFilter, selectionPolicy: 'unique-case-insensitive-local-name' } : {}),
@@ -195,6 +208,8 @@ let journeyBrowserObserved = false;
 let filterCompleted = false;
 const filterRecords = [];
 const journeyRecords = [];
+const apiRecords = [];
+let apiCapture = null;
 function reportFailure() {
   reportFailed = true;
   console.error('Cannot validate or persist measurement output; stopping this run. Raw content withheld.');
@@ -212,6 +227,46 @@ for (const stream of [child.stdout, child.stderr]) {
       return;
     }
     if (record.source !== 'console' || typeof record.msg !== 'string') return;
+    if (experience && record.msg.startsWith('EXPERIENCE_API ')) {
+      try {
+        const measurement = apiRecord(JSON.parse(record.msg.slice('EXPERIENCE_API '.length)));
+        if (apiCapture || measurement.sequence !== apiRecords.length + 1) throw new Error('Invalid API sequence');
+        appendFileSync(reportFile, JSON.stringify({ type: 'api_request', ...measurement }) + '\n');
+        apiRecords.push(measurement);
+      } catch {
+        reportFailure();
+      }
+      return;
+    }
+    if (experience && record.msg.startsWith('EXPERIENCE_API_CAPTURE ')) {
+      try {
+        const value = JSON.parse(record.msg.slice('EXPERIENCE_API_CAPTURE '.length));
+        if (apiCapture || value.observed !== apiRecords.length ||
+            !Number.isSafeInteger(value.collectionErrors) || value.collectionErrors < 0 ||
+            typeof value.complete !== 'boolean' ||
+            value.complete !== (value.collectionErrors === 0 && apiRecords.every((r) => r.state === 'completed'))) {
+          throw new Error('Invalid API capture evidence');
+        }
+        let errorCounts;
+        if (value.errorCounts !== undefined) {
+          errorCounts = Object.fromEntries(apiErrorCategories.map((category) => {
+            const count = value.errorCounts[category];
+            if (!Number.isSafeInteger(count) || count < 0) throw new Error('Invalid API error counts');
+            return [category, count];
+          }));
+          if (Object.values(errorCounts).reduce((sum, count) => sum + count, 0) !== value.collectionErrors) {
+            throw new Error('API error counts do not match');
+          }
+        }
+        apiCapture = { type: 'api_capture', observed: apiRecords.length,
+          complete: value.complete, collectionErrors: value.collectionErrors,
+          ...(errorCounts ? { errorCounts } : {}) };
+        appendFileSync(reportFile, JSON.stringify(apiCapture) + '\n');
+      } catch {
+        reportFailure();
+      }
+      return;
+    }
     if (measuredMode && record.msg.startsWith('JOURNEY_BROWSER ')) {
       try {
         const value = JSON.parse(record.msg.slice('JOURNEY_BROWSER '.length));
@@ -339,15 +394,16 @@ child.on('close', (code) => {
       const outcome = {
         type: 'outcome', finishedAt: new Date().toISOString(), success,
         ...(experience ? { summary: {
-          complete: success, journey: summary, filter: filterSummary(filterRecords),
+          complete: success, journey: summary, filter: filterSummary(filterRecords), api: apiCapture,
         } } : filterTest ? { summary: filterSummary(filterRecords) } : timedJourney ? { summary } : { checkpointCount }),
       };
       appendFileSync(reportFile, JSON.stringify(outcome) + '\n');
       if (experience) {
         const readable = new URL(reportFile.href.replace(/\.jsonl$/, '.md'));
-        writeFileSync(readable, experienceReport(session, journeyRecords, filterRecords, outcome),
+        writeFileSync(readable, experienceReport(session, journeyRecords, filterRecords, outcome, apiRecords, apiCapture),
           { flag: 'wx', mode: 0o600 });
         console.log(`Single-user experience report: ${fileURLToPath(readable)}`);
+        if (!apiCapture?.complete) console.error('API timing capture incomplete or unavailable; see report. UI outcome is separate.');
       }
     } catch {
       console.error('Could not persist the run outcome. Report is incomplete.');

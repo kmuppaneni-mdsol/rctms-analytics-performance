@@ -5,6 +5,15 @@
   "type": "module",
   "description": "k6 browser concurrency testing for Medidata Analytics dashboards",
   "scripts": {
+    "test:experience-api-local": "node --test scripts/experience-api-local.js",
+    "test:experience-api-syntax": "node --check lib/experience-api.js && node --check lib/experience-report.js && node --check scripts/run-login-poc.js && node --check scripts/login-poc.js && node --check scripts/experience-api-fixture.js && node --check scripts/experience-api-local.js",
+    "api:authorization": "node scripts/run-authorization-api.js",
+    "test:authorization-local": "node --test scripts/authorization-api-local.js",
+    "test:authorization-syntax": "node --check lib/authorization-api.js && node --check scripts/run-authorization-api.js && node --check scripts/authorization-api-local.js",
+    "api:liveboard": "node scripts/run-liveboard-api.js",
+    "api:liveboard:burst": "node scripts/run-liveboard-api.js --burst-six",
+    "test:api-local": "node --test scripts/liveboard-api-local.js",
+    "test:api-syntax": "node --check lib/liveboard-api.js && node --check scripts/liveboard-api.js && node --check scripts/run-liveboard-api.js && node --check scripts/liveboard-api-local.js",
     "test": "node --test",
     "test:syntax": "node --check scripts/local-smoke.js && node --check scripts/inspect-login.js && node --check scripts/login-poc.js && node --check scripts/run-login-poc.js && node --check lib/dashboard-probe.js && node --check lib/widget-state.js && node --check lib/widget-readiness.js && node --check scripts/dashboard-probe-local.js && node --check lib/guided-discovery.js && node --check lib/discovery-report.js && node --check scripts/discovery-local.js && node --check lib/journey.js && node --check lib/journey-dom.js && node --check lib/journey-plan.js && node --check lib/journey-report.js && node --check scripts/journey-local.js && node --check lib/baseline-report.js && node --check scripts/summarize-baseline.js && node --check lib/filter.js && node --check lib/filter-dom.js && node --check lib/filter-report.js && node --check scripts/filter-local.js",
     "smoke:local": "k6 run scripts/local-smoke.js",
@@ -23,5 +32,8 @@
     "smoke:journey-local": "k6 run scripts/journey-local.js",
     "smoke:discovery-local": "k6 run scripts/discovery-local.js",
     "smoke:widget-local": "k6 run scripts/dashboard-probe-local.js"
+  },
+  "devDependencies": {
+    "playwright-core": "1.64.1"
   }
 }
